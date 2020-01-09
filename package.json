@@ -1,12 +1,12 @@
 {
   "name": "kepler.gl",
-  "author": "Shan He <shan@uber.com>",
+  "author": "",
   "version": "1.1.12",
   "description": "kepler.gl is a webgl based application to visualize large scale location data in the browser",
   "license": "MIT",
   "main": "dist/index.js",
   "engines": {
-    "node": ">=8.15.0",
+    "node": ">=8.7.0",
     "npm": ">=6.1.0",
     "yarn": ">=1.6.0"
   },
@@ -20,7 +20,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/keplergl/kepler.gl.git"
+    "url": "https://github.com/hkittylover/kepler.gl.git"
   },
   "scripts": {
     "install:example": "cd examples/demo-app && yarn --ignore-engines",
