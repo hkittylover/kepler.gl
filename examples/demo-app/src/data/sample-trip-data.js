@@ -19,57 +19,34 @@
 // THE SOFTWARE.
 
 // Sample Taxi Trip Data
-export const testCsvData = `gps_data.utc_timestamp,gps_data.lat,gps_data.lng,gps_data.types,epoch,has_result,id,time,begintrip_ts_utc,begintrip_ts_local,date
-2016-09-17 00:09:55,29.9900937,31.2590542,driver_analytics,1472688000000,False,1,2016-09-23T00:00:00.000Z,2016-10-01 09:41:39+00:00,2016-10-01 09:41:39+00:00,2016-09-23
-2016-09-17 00:10:56,29.9927699,31.2461142,driver_analytics,1472688000000,False,2,2016-09-23T00:00:00.000Z,2016-10-01 09:46:37+00:00,2016-10-01 16:46:37+00:00,2016-09-23
-2016-09-17 00:11:56,29.9907261,31.2312742,driver_analytics,1472688000000,False,3,2016-09-23T00:00:00.000Z,,,2016-09-23
-2016-09-17 00:12:58,29.9870074,31.2175827,driver_analytics,1472688000000,False,4,2016-09-23T00:00:00.000Z,,,2016-09-23
-2016-09-17 00:14:00,29.9923041,31.2154899,driver_analytics,1472688000000,False,5,2016-09-23T00:00:00.000Z,2016-10-01 09:47:37+00:00,2016-10-01 16:47:37+00:00,
-2016-09-17 00:15:01,29.9968249,31.2149361,driver_analytics,1472688000000,False,12124,2016-09-23T05:00:00.000Z,,,
-2016-09-17 00:16:03,30.0037217,31.2164035,driver_analytics,1472688000000,False,222,2016-09-23T05:00:00.000Z,,,
-2016-09-17 00:17:05,30.0116207,31.2179346,driver_analytics,1472688000000,False,345,2016-09-23T00:00:00.000Z,,,2016-09-24
-2016-09-17 00:18:09,30.0208925,31.2179556,driver_analytics,1472708000000,False,,2016-09-23T00:00:00.000Z,,,2016-09-24
-2016-09-17 00:19:12,30.0218999,31.2178842,driver_analytics,1472708000000,False,,2016-09-23T06:00:00.000Z,,,2016-09-24
-2016-09-17 00:19:27,30.0229344,31.2179138,driver_analytics,1472708000000,False,,2016-09-23T05:00:00.000Z,,,2016-09-24
-2016-09-17 00:20:14,30.0264237,31.2179415,driver_analytics,1472708000000,False,,,,,2016-09-24
-2016-09-17 00:21:17,30.0292134,31.2181809,driver_analytics,1472754400000,False,,,,,2016-09-24
-2016-09-17 00:22:20,30.034391,31.2193991,driver_analytics,1472754400000,,,2016-09-23T06:00:00.000Z,,,
-2016-09-17 00:23:22,30.0352752,31.2181803,driver_analytics,1472754400000,,,2016-09-23T06:00:00.000Z,2016-10-01 10:01:54+00:00,2016-10-01 17:01:54+00:00,
-2016-09-17 00:24:24,30.0395918,31.2195902,driver_analytics,1472754400000,,1,2016-09-23T00:00:00.000Z,2016-10-01 09:53:04+00:00,2016-10-01 16:53:04+00:00,
-2016-09-17 00:25:28,30.0497387,31.2174421,driver_analytics,1472774400000,,,2016-09-23T07:00:00.000Z,2016-10-01 09:55:23+00:00,2016-10-01 16:55:23+00:00,
-2016-09-17 00:26:29,30.0538936,31.2165983,driver_analytics,1472774400000,,43,2016-09-23T07:00:00.000Z,2016-10-01 09:59:53+00:00,2016-10-01 16:59:53+00:00,2016-10-10
-2016-09-17 00:27:31,30.060911,31.2148748,driver_analytics,1472774400000,,4,2016-09-23T07:00:00.000Z,2016-10-01 09:57:11+00:00,2016-10-01 16:57:11+00:00,2016-10-10
-2016-09-17 00:28:35,30.060334,31.2212278,driver_analytics,1472774400000,,5,2016-09-23T07:00:00.000Z,2016-10-01 09:59:27+00:00,2016-10-01 16:59:27+00:00,2016-10-10
-2016-09-17 00:29:40,30.0554663,31.2288985,driver_analytics,1472774400000,True,,2016-09-23T07:00:00.000Z,2016-10-01 09:46:36+00:00,2016-10-01 16:46:36+00:00,2016-10-10
-2016-09-17 00:30:03,30.0614122,31.2187021,driver_gps,1472774400000,True,6,2016-09-23T08:00:00.000Z,2016-10-01 09:54:31+00:00,2016-10-01 16:54:31+00:00,2016-10-10
-2016-09-17 00:30:03,30.0612697,31.2191059,driver_gps,1472774400000,True,7,2016-09-23T08:00:00.000Z,2016-10-01 09:53:35+00:00,2016-10-01 16:53:35+00:00,2016-10-10
-2016-09-17 00:30:08,30.0610977,31.2194728,driver_gps,1472774400000,True,,2016-09-23T08:00:00.000Z,,,`;
-
 export default {
   fields: [
     {
       name: 'tpep_pickup_datetime',
       format: 'YYYY-M-D H:m:s',
+      tableFieldIndex: 1,
       type: 'timestamp'
     },
     {
       name: 'tpep_dropoff_datetime',
       format: 'YYYY-M-D H:m:s',
+      tableFieldIndex: 2,
       type: 'timestamp'
     },
     {
       name: 'passenger_count',
       format: '',
+      tableFieldIndex: 3,
       type: 'integer'
     },
-    {name: 'trip_distance', format: '', type: 'real'},
-    {name: 'pickup_longitude', format: '', type: 'real'},
-    {name: 'pickup_latitude', format: '', type: 'real'},
-    {name: 'dropoff_longitude', format: '', type: 'real'},
-    {name: 'dropoff_latitude', format: '', type: 'real'},
-    {name: 'fare_amount', format: '', type: 'real'},
-    {name: 'is_completed', format: '', type: 'boolean'},
-    {name: 'fare_type', format: '', type: 'string'}
+    {name: 'trip_distance', format: '', tableFieldIndex: 4, type: 'real'},
+    {name: 'pickup_longitude', format: '', tableFieldIndex: 5, type: 'real'},
+    {name: 'pickup_latitude', format: '', tableFieldIndex: 6, type: 'real'},
+    {name: 'dropoff_longitude', format: '', tableFieldIndex: 7, type: 'real'},
+    {name: 'dropoff_latitude', format: '', tableFieldIndex: 8, type: 'real'},
+    {name: 'fare_amount', format: '', tableFieldIndex: 9, type: 'real'},
+    {name: 'is_completed', format: '', tableFieldIndex: 10, type: 'boolean'},
+    {name: 'fare_type', format: '', tableFieldIndex: 11, type: 'string'}
   ],
   rows: [
     [
@@ -88,7 +65,7 @@ export default {
     [
       '2015-01-15 19:05:39 +00:00',
       '2015-01-15 19:32:00 +00:00',
-      0,
+      1,
       2.38,
       -73.97642517,
       40.73981094,
@@ -153,7 +130,7 @@ export default {
     [
       '2015-01-15 19:05:41 +00:00',
       '2015-01-15 19:31:00 +00:00',
-      0,
+      1,
       3.6,
       -73.97660065,
       40.7518959,
@@ -231,7 +208,7 @@ export default {
     [
       '2015-01-15 19:05:42 +00:00',
       '2015-01-15 19:16:18 +00:00',
-      0,
+      1,
       1.53,
       -73.99112701,
       40.75008011,
@@ -296,7 +273,7 @@ export default {
     [
       '2015-01-15 19:05:43 +00:00',
       '2015-01-15 19:17:43 +00:00',
-      0,
+      2,
       2.23,
       -73.98509216,
       40.75698853,
@@ -517,7 +494,7 @@ export default {
     [
       '2015-01-15 14:00:45 +00:00',
       '2015-01-15 14:10:24 +00:00',
-      null,
+      1,
       1.2,
       -73.9940033,
       40.7513504,
@@ -608,7 +585,7 @@ export default {
     [
       '2015-01-15 14:00:47 +00:00',
       '2015-01-15 14:16:01 +00:00',
-      null,
+      1,
       1.56,
       -73.95927429,
       40.77437592,
@@ -616,7 +593,7 @@ export default {
       40.76293945,
       10.5,
       true,
-      'banana peel 2'
+      'banana peel'
     ],
     [
       '2015-01-15 14:00:47 +00:00',
@@ -686,7 +663,7 @@ export default {
     [
       '2015-01-15 10:26:14 +00:00',
       '2015-01-15 10:49:00 +00:00',
-      null,
+      2,
       6.8,
       -73.97297668,
       40.7611351,
@@ -694,7 +671,7 @@ export default {
       40.70956421,
       23,
       true,
-      'banana peel 2'
+      'banana peel'
     ],
     [
       '2015-01-15 10:26:15 +00:00',
@@ -3973,58 +3950,4 @@ export default {
       'orange peel'
     ]
   ]
-};
-
-export const sampleTripDataConfig = {
-  version: 'v1',
-  config: {
-    visState: {
-      layers: [
-        {
-          type: 'heatmap',
-          config: {
-            dataId: 'test_trip_data',
-            columns: {
-              lat: 'pickup_latitude',
-              lng: 'pickup_longitude'
-            },
-            isVisible: true
-          }
-        },
-        {
-          type: 'point',
-          config: {
-            dataId: 'test_trip_data',
-            columns: {
-              lat: 'pickup_latitude',
-              lng: 'pickup_longitude'
-            },
-            isVisible: true
-          }
-        },
-        {
-          type: 'arc',
-          config: {
-            dataId: 'test_trip_data',
-            columns: {
-              lat0: 'pickup_latitude',
-              lng0: 'pickup_longitude',
-              lat1: 'dropoff_latitude',
-              lng1: 'dropoff_longitude'
-            },
-            isVisible: true
-          }
-        }
-      ],
-      filters: [
-        {
-          id: 'me',
-          dataId: 'test_trip_data',
-          name: 'tpep_pickup_datetime',
-          type: 'timeRange',
-          enlarged: true
-        }
-      ]
-    }
-  }
 };

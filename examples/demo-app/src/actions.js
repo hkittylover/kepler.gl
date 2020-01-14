@@ -20,17 +20,16 @@
 
 import {push} from 'react-router-redux';
 import {request, text as requestText, json as requestJson} from 'd3-request';
-import {loadFiles, toggleModal} from 'kepler.gl/actions';
+import {loadFiles, toggleModal, processData} from 'kepler.gl/actions';
 
 import {
   LOADING_SAMPLE_ERROR_MESSAGE,
   LOADING_SAMPLE_LIST_ERROR_MESSAGE,
-  MAP_CONFIG_URL, MAP_URI
+  MAP_CONFIG_URL, MAP_URI, ACTIVE_CITIES_URL
 } from './constants/default-settings';
 import {LOADING_METHODS_NAMES} from './constants/default-settings';
-import {getCloudProvider} from './cloud-providers';
+import {CLOUD_PROVIDERS} from './utils/cloud-providers';
 import {generateHashId} from './utils/strings';
-import {parseUri} from './utils/url';
 import KeplerGlSchema from 'kepler.gl/schemas';
 
 // CONSTANTS
@@ -44,6 +43,10 @@ export const SET_SAMPLE_LOADING_STATUS = 'SET_SAMPLE_LOADING_STATUS';
 // Sharing
 export const PUSHING_FILE = 'PUSHING_FILE';
 export const CLOUD_LOGIN_SUCCESS  = 'CLOUD_LOGIN_SUCCESS';
+
+// PLEXUS
+export const LOAD_ACTIVE_CITIES = 'LOAD_ACTIVE_CITIES';
+export const SET_SELECTED_CITY = 'SET_SELECTED_CITY';
 
 // ACTIONS
 export function initApp() {
@@ -109,6 +112,21 @@ export function setLoadingMapStatus(isMapLoading) {
   };
 }
 
+// PLEXUS
+export function loadActiveCities(cities) {
+  return {
+    type: LOAD_ACTIVE_CITIES,
+    cities
+  };
+}
+
+export function setSelectedCity(selectedCity) {
+  return {
+    type: SET_SELECTED_CITY,
+    selectedCity
+  };
+}
+
 /**
  * this method detects whther the response status is < 200 or > 300 in case the error
  * is not caught by the actualy request framework
@@ -136,16 +154,47 @@ function detectResponseError(response) {
 export function loadRemoteMap(options) {
   return dispatch => {
     dispatch(setLoadingMapStatus(true));
-    // breakdown url into url+query params
     loadRemoteRawData(options.dataUrl).then(
       // In this part we turn the response into a FileBlob
       // so we can use it to call loadFiles
-      ([file, url]) => {
-        const {file: filename} = parseUri(url);
+      file => {
         dispatch(loadFiles([
-          new File([file], filename)
+          /* eslint-disable no-undef */
+          new File([file], options.dataUrl)
+          /* eslint-enable no-undef */
         ])).then(
-          () => dispatch(setLoadingMapStatus(false))
+          () => dispatch(processData()).then(
+            () => dispatch(setLoadingMapStatus(false))
+          )
+        );
+        
+      },
+      error => {
+        const {target = {}} = error;
+        const {status, responseText} = target;
+        dispatch(loadRemoteResourceError({status, message: responseText}, options.dataUrl));
+      }
+    );
+  }
+}
+
+// PLEXUS
+export function loadBarangayMap(options) {
+  return dispatch => {
+    dispatch(setLoadingMapStatus(true));
+    loadRemoteRawData(options.dataUrl).then(
+      // In this part we turn the response into a FileBlob
+      // so we can use it to call loadFiles
+      file => {
+        dispatch(loadFiles([
+          /* eslint-disable no-undef */
+          new File([file], options.dataUrl)
+          /* eslint-enable no-undef */
+        ])).then(
+          () => processData([]).then(
+            () => dispatch(setLoadingMapStatus(false))
+          )
+          
         );
 
       },
@@ -179,7 +228,7 @@ function loadRemoteRawData(url) {
         reject(responseError);
         return;
       }
-      resolve([result.response, url])
+      resolve(result.response)
     })
   });
 }
@@ -351,55 +400,69 @@ export function setPushingFile(isLoading, metadata) {
 /**
  * This method will export the current kepler config file to the choosen cloud platform
  * @param data
- * @param providerName
+ * @param handlerName
  * @returns {Function}
  */
-export function exportFileToCloud(providerName) {
-  if (!providerName) {
-    throw new Error('No cloud provider identified')
-  }
-  const cloudProvider = getCloudProvider(providerName);
+export function exportFileToCloud(handlerName = 'dropbox') {
+  const authHandler = CLOUD_PROVIDERS[handlerName];
   return (dispatch, getState) => {
     // extract data from kepler
-    const mapData = KeplerGlSchema.save(getState().demo.keplerGl.map);
-    const data = JSON.stringify(mapData);
-    const newBlob = new Blob([data], {type: 'application/json'});
-    const fileName = `/keplergl_${generateHashId(6)}.json`;
-    const file = new File([newBlob], fileName);
-    // We are gonna pass the correct auth token to init the cloud provider
+    const data = KeplerGlSchema.save(getState().demo.keplerGl.map);
+    const newBlob = new Blob([JSON.stringify(data)], {type: 'application/json'});
+    const file = new File([newBlob], `kepler.gl/keplergl_${generateHashId(6)}.json`);
     dispatch(setPushingFile(true, {filename: file.name, status: 'uploading', metadata: null}));
-    cloudProvider.uploadFile({
-      data,
-      type: 'application/json',
-      blob: file,
-      name: fileName,
-      isPublic: true,
-      cloudProvider
-    })
+    authHandler.uploadFile({blob: file, isPublic: true, authHandler})
     // need to perform share as well
-    .then(
-      response => {
-        if (cloudProvider.shareFile) {
+      .then(
+        response => {
           dispatch(push(`/${MAP_URI}${response.url}`));
+          dispatch(setPushingFile(false, {filename: file.name, status: 'success', metadata: response}));
+        },
+        error => {
+          dispatch(setPushingFile(false, {filename: file.name, status: 'error', error}));
         }
-        dispatch(setPushingFile(false, {filename: file.name, status: 'success', metadata: response}));
-      },
-      error => {
-        dispatch(setPushingFile(false, {filename: file.name, status: 'error', error}));
-      }
-    );
+      )
   };
 }
 
-export function setCloudLoginSuccess(providerName) {
+export function setCloudLoginSuccess() {
+  return {
+    type: CLOUD_LOGIN_SUCCESS
+  };
+}
+
+// PLEXUS
+
+export function loadAllActiveCities() {
   return dispatch => {
-    dispatch({type: CLOUD_LOGIN_SUCCESS}).then(
-      () => {
-        dispatch(exportFileToCloud(providerName));
-      },
-      () => {
-        dispatch(setPushingFile(false, {filename: null, status: 'error', error: 'not able to propagate login successfully'}));
+    requestJson(ACTIVE_CITIES_URL, (error, cities) => {
+      if (error) {
+        const {target = {}} = error;
+        const {status, responseText} = target;
+        dispatch(loadRemoteResourceError({status, message: `${responseText} - ${LOADING_SAMPLE_ERROR_MESSAGE}`}, ACTIVE_CITIES_URL));
+      } else {
+        const responseError = detectResponseError(cities);
+        if (responseError) {
+          dispatch(loadRemoteResourceError(responseError, ACTIVE_CITIES_URL));
+          return;
+        }
+
+        dispatch(loadActiveCities(cities));
+        // Load the specified map
+        // const map = sampleMapId && samples.find(s => s.id === sampleMapId);
+        // if (map) {
+        //   dispatch(loadSample(map, false));
+        // }
       }
-    );
+    });
+  }
+}
+
+export function switchToLoadingMethodCity(method) {
+  return (dispatch, getState) => {
+    dispatch(setLoadingMethod(method));
+    if (method === LOADING_METHODS_NAMES.select && getState().demo.app.cities.length === 0) {
+      dispatch(loadAllActiveCities());
+    }
   };
 }
