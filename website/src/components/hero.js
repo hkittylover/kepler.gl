@@ -113,6 +113,9 @@ export default class Hero extends PureComponent {
               <LinkButton large href={DEMO_LINK}>
                 Get Started
               </LinkButton>
+              <LinkButton large href="https://github.com/dlsucomet/kepler.gl/wiki/User-Manual">
+                Tutorial Plexus
+              </LinkButton>
               <LinkButton
                 large
                 outlineDark
