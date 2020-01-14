@@ -100,7 +100,7 @@ export default class Hero extends PureComponent {
           <LogoImage />
           <StyledCaption>
             <div className="kg-home__caption__subtitle">
-              Make an impact with your location data
+              Transport Desirability Website (To edit)
             </div>
             <div className="kg-home__caption__description">
               <span>Kepler.gl is a powerful </span>
