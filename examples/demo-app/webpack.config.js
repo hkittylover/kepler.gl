@@ -39,17 +39,12 @@ const CONFIG = {
 
   devtool: 'source-map',
 
-  resolve: {
-    // Make src files outside of this dir resolve modules in our node_modules folder
-    modules: [resolve(__dirname, '.'), resolve(__dirname, 'node_modules'), 'node_modules']
-  },
-
   module: {
     rules: [
       {
         test: /\.js$/,
         loader: 'babel-loader',
-        include: join(__dirname, 'src'),
+        include: [join(__dirname, 'src')],
         exclude: [/node_modules/]
       },
       {
@@ -57,13 +52,7 @@ const CONFIG = {
         test: /\.json$/,
         loader: 'json-loader',
         exclude: [/node_modules/]
-      },
-      {
-  // Preprocess your css files
-  // you can add additional loaders here (e.g. sass/less etc.)
-  test: /\.css$/,
-  use: ['style-loader', 'css-loader'],
-}
+      }
     ]
   },
 
@@ -76,9 +65,12 @@ const CONFIG = {
     historyApiFallback: true
   },
 
-  // Optional: Enables reading mapbox token from environment variable
+  // Optional: Enables reading mapbox and dropbox client token from environment variable
   plugins: [
-    new webpack.EnvironmentPlugin(['MapboxAccessToken', 'DropboxClientId'])
+    new webpack.EnvironmentPlugin([
+      'MapboxAccessToken',
+      'DropboxClientId'
+    ])
   ]
 };
 

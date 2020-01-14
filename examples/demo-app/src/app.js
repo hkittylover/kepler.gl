@@ -20,45 +20,49 @@
 
 import React, {Component} from 'react';
 import {findDOMNode} from 'react-dom';
-import styled, {ThemeProvider}  from 'styled-components';
+import AutoSizer from 'react-virtualized/dist/commonjs/AutoSizer';
+import styled, {ThemeProvider} from 'styled-components';
 import window from 'global/window';
 import {connect} from 'react-redux';
 import {theme} from 'kepler.gl/styles';
 import Banner from './components/banner';
 import Announcement from './components/announcement';
 import {replaceLoadDataModal} from './factories/load-data-modal';
+import {replaceSaveMap} from './factories/save-map';
+import {replaceMapControl} from './factories/map-control';
+import {replacePanelHeader} from './factories/panel-header';
 import ExportUrlModal from './components/sharing/export-url-modal';
-
+import {AUTH_TOKENS} from './constants/default-settings';
 import {
   exportFileToCloud,
   loadRemoteMap,
   loadSampleConfigurations,
-  setCloudLoginSuccess,
-  // PLEXUS
-  loadActiveCities,
-  loadAllActiveCities,
-  switchToLoadingMethodCity
+  setCloudLoginSuccess
 } from './actions';
 
 const KeplerGl = require('kepler.gl/components').injectComponents([
-  replaceLoadDataModal()
+  replaceLoadDataModal(),
+  replaceSaveMap(),
+  replaceMapControl(),
+  replacePanelHeader()
 ]);
 
 // Sample data
 /* eslint-disable no-unused-vars */
-import sampleTripData from './data/sample-trip-data';
-import sampleGeojson from './data/sample-small-geojson.json';
-import sampleGeojsonPoints from './data/sample-geojson-points.json';
-import sampleH3Data from './data/sample-hex-id-csv';
+import sampleTripData, {testCsvData, sampleTripDataConfig} from './data/sample-trip-data';
+import sampleGeojson from './data/sample-small-geojson';
+import sampleGeojsonPoints from './data/sample-geojson-points';
+import sampleGeojsonConfig from './data/sample-geojson-config';
+import sampleH3Data, {config as h3MapConfig} from './data/sample-hex-id-csv';
+import sampleAnimateTrip from './data/sample-animate-trip-data';
 import sampleIconCsv, {config as savedMapConfig} from './data/sample-icon-csv';
 import {addDataToMap, addNotification} from 'kepler.gl/actions';
-import Processors from 'kepler.gl/processors';
+import {processCsvData, processGeojson} from 'kepler.gl/processors';
 /* eslint-enable no-unused-vars */
-
-const MAPBOX_TOKEN = process.env.MapboxAccessToken; // eslint-disable-line
 
 const BannerHeight = 30;
 const BannerKey = 'kgHideBanner-iiba';
+const keplerGlGetState = state => state.demo.keplerGl;
 
 const GlobalStyle = styled.div`
   font-family: ff-clan-web-pro, 'Helvetica Neue', Helvetica, sans-serif;
@@ -96,13 +100,14 @@ class App extends Component {
     height: window.innerHeight
   };
 
-  componentWillMount() {
+  componentDidMount() {
     // if we pass an id as part of the url
     // we ry to fetch along map configurations
-    const {params: {id} = {}, location: {query = {}}} = this.props;
+    const {
+      params: {id} = {},
+      location: {query = {}} = {}
+    } = this.props;
 
-    // switchToLoadingMethodCity(this.props.demo.app.loadingMethod.id);
-    this.props.dispatch(loadAllActiveCities(id));
     // Load sample using its id
     if (id) {
       this.props.dispatch(loadSampleConfigurations(id));
@@ -114,35 +119,15 @@ class App extends Component {
       this.props.dispatch(loadRemoteMap({dataUrl: query.mapUrl}));
     }
 
-    // event listeners
-    window.addEventListener('resize', this._onResize);
-
-    this._onResize();
-  }
-
-  componentDidMount() {
     // delay zs to show the banner
     // if (!window.localStorage.getItem(BannerKey)) {
     //   window.setTimeout(this._showBanner, 3000);
     // }
-
     // load sample data
     // this._loadSampleData();
-
     // Notifications
     // this._loadMockNotifications();
   }
-
-  componentWillUnmount() {
-    window.removeEventListener('resize', this._onResize);
-  }
-
-  _onResize = () => {
-    this.setState({
-      width: window.innerWidth,
-      height: window.innerHeight
-    });
-  };
 
   _showBanner = () => {
     this.setState({showBanner: true});
@@ -180,13 +165,15 @@ class App extends Component {
   }
 
   _loadSampleData() {
-    // this._loadTripData();
+    this._loadPointData();
     // this._loadGeojsonData();
-    this._loadIconData();
-    this._loadH3HexagonData();
+    // this._loadTripGeoJson();
+    // this._loadIconData();
+    // this._loadGeojsonData();
+    // this._loadH3HexagonData();
   }
 
-  _loadTripData() {
+  _loadPointData() {
     this.props.dispatch(
       addDataToMap({
         datasets: {
@@ -196,23 +183,11 @@ class App extends Component {
           },
           data: sampleTripData
         },
-        option: {
+        options: {
           centerMap: true,
           readOnly: false
         },
-        config: {
-          visState: {
-            filters: [
-              {
-                id: 'me',
-                dataId: 'test_trip_data',
-                name: 'tpep_pickup_datetime',
-                type: 'timeRange',
-                enlarged: true
-              }
-            ]
-          }
-        }
+        config: sampleTripDataConfig
       })
     );
   }
@@ -227,13 +202,22 @@ class App extends Component {
               label: 'Icon Data',
               id: 'test_icon_data'
             },
-            data: Processors.processCsvData(sampleIconCsv)
+            data: processCsvData(sampleIconCsv)
           }
-        ],
-        options: {
-          centerMap: false
-        },
-        config: savedMapConfig
+        ]
+      })
+    );
+  }
+
+  _loadTripGeoJson() {
+    this.props.dispatch(
+      addDataToMap({
+        datasets: [
+          {
+            info: {label: 'Trip animation'},
+            data: processGeojson(sampleAnimateTrip)
+          }
+        ]
       })
     );
   }
@@ -242,13 +226,20 @@ class App extends Component {
     // load geojson
     this.props.dispatch(
       addDataToMap({
-        datasets: [{
-          info: {label: 'Bart Stops Geo'},
-          data: Processors.processGeojson(sampleGeojsonPoints)
-        }, {
-          info: {label: 'SF Zip Geo'},
-          data: Processors.processGeojson(sampleGeojson)
-        }]
+        datasets: [
+          {
+            info: {label: 'Bart Stops Geo', id: 'bart-stops-geo'},
+            data: processGeojson(sampleGeojsonPoints)
+          },
+          {
+            info: {label: 'SF Zip Geo', id: 'sf-zip-geo'},
+            data: processGeojson(sampleGeojson)
+          }
+        ],
+        options: {
+          keepExistingConfig: true
+        },
+        config: sampleGeojsonConfig
       })
     );
   }
@@ -263,9 +254,13 @@ class App extends Component {
               label: 'H3 Hexagons V2',
               id: 'h3-hex-id'
             },
-            data: Processors.processCsvData(sampleH3Data)
+            data: processCsvData(sampleH3Data)
           }
-        ]
+        ],
+        config: h3MapConfig,
+        options: {
+          keepExistingConfig: true
+        }
       })
     );
   }
@@ -283,28 +278,42 @@ class App extends Component {
     });
   };
 
-  _onExportToCloud = () => {
-    this.props.dispatch(exportFileToCloud());
+  _onExportToCloud = (providerName) => {
+    this.props.dispatch(exportFileToCloud(providerName));
   };
 
-  _onCloudLoginSuccess = () => {
-    this.props.dispatch(setCloudLoginSuccess());
+  _onCloudLoginSuccess = (providerName) => {
+    this.props.dispatch(setCloudLoginSuccess(providerName));
+  };
+
+  _getMapboxRef = (mapbox, index) => {
+    if (!mapbox) {
+      // The ref has been unset.
+      // https://reactjs.org/docs/refs-and-the-dom.html#callback-refs
+      // console.log(`Map ${index} has closed`);
+    } else {
+      // We expect an InteractiveMap created by KeplerGl's MapContainer.
+      // https://uber.github.io/react-map-gl/#/Documentation/api-reference/interactive-map
+      const map = mapbox.getMap();
+      map.on('zoomend', e => {
+        // console.log(`Map ${index} zoom level: ${e.target.style.z}`);
+      });
+    }
   };
 
   render() {
-    // console.log("APP");
-    // console.log(this.props);
-    const {showBanner, width, height} = this.state;
+    const {showBanner} = this.state;
     const {sharing} = this.props.demo;
     const rootNode = this.root;
-    
     return (
       <ThemeProvider theme={theme}>
         <GlobalStyle
           // this is to apply the same modal style as kepler.gl core
           // because styled-components doesn't always return a node
           // https://github.com/styled-components/styled-components/issues/617
-          innerRef={node => {node ? this.root = node : null}}
+          ref={node => {
+            node ? (this.root = node) : null;
+          }}
         >
           <Banner
             show={this.state.showBanner}
@@ -312,7 +321,7 @@ class App extends Component {
             bgColor="#82368c"
             onClose={this._hideBanner}
           >
-            <Announcement onDisable={this._disableBanner}/>
+            <Announcement onDisable={this._disableBanner} />
           </Banner>
           {this._isCloudStorageEnabled() && rootNode && (
             <ExportUrlModal
@@ -335,23 +344,24 @@ class App extends Component {
               marginTop: showBanner ? `${BannerHeight}px` : 0
             }}
           >
-            <KeplerGl
-              mapboxApiAccessToken={MAPBOX_TOKEN}
-              id="map"
-              /*
-               * Specify path to keplerGl state, because it is not mount at the root
-               */
-              getState={state => state.demo.keplerGl}
-              width={width}
-              height={height - (showBanner ? BannerHeight : 0)}
-              onSaveMap={this._isCloudStorageEnabled() && this._toggleCloudModal}
-              activeCities = {this.props.demo.app.activeCities}
-              selectedCity = {this.props.demo.app.selectedCity}
-            />
+            <AutoSizer>
+              {({height, width}) => (
+                <KeplerGl
+                  mapboxApiAccessToken={AUTH_TOKENS.MAPBOX_TOKEN}
+                  id="map"
+                  /*
+                   * Specify path to keplerGl state, because it is not mount at the root
+                   */
+                  getState={keplerGlGetState}
+                  width={width}
+                  height={height - (showBanner ? BannerHeight : 0)}
+                  onSaveMap={this._isCloudStorageEnabled() && this._toggleCloudModal}
+                />
+              )}
+            </AutoSizer>
           </div>
         </GlobalStyle>
       </ThemeProvider>
-
     );
   }
 }
